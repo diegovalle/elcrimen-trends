@@ -2,7 +2,7 @@
 
 # tidybayes need dplyr >= 0.8.0
 if (packageVersion("dplyr") < "0.8.0")
-  update.packages("dplyr")
+  install.packages("dplyr")
 
 ## Auto-Install packages
 .packs <- c("readr", "dplyr", "zoo", "ggplot2", "mgcv",
@@ -15,9 +15,11 @@ if (length(names(.success)[!.success])) {
   sapply(names(.success)[!.success], require, character.only = TRUE)
 }
 
-
-
 options(stringsAsFactors = FALSE)
+
+# Check if dplyr was updated
+if (packageVersion("dplyr") < "0.8.0")
+  quit(status = 1)
 
 source("R/national.R")
 source("R/states.R")
