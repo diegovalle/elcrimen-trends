@@ -17,8 +17,17 @@ df[which(df$state == "OAXACA" & df$date == "2016-10-01"), "n"] <- 76
 # add missing oaxaca 2015 homicides
 df[which(df$state == "OAXACA")[1:12], "n"] <- c(56,67,57,49,86,73,93,69,74,63,89,73)
 
-pop <- monthly_pop() %>% filter(year %in% 2015:max(df$year)) %>%
-  mutate(date = as.Date(str_c(year, "-", month, "-01")))
+#pop <- monthly_pop() %>% filter(year %in% 2015:max(df$year)) %>%
+#  mutate(date = as.Date(str_c(year, "-", month, "-01")))
+pop <- read_csv("data/states_pop.csv", col_types = cols(
+  state_name = col_character(),
+  state_code = col_double(),
+  year = col_double(),
+  month = col_double(),
+  population = col_double(),
+  date = col_date(format = "")
+))
+pop <- pop %>% mutate(date = as.Date(str_c(year, "-", month, "-01")))
 df <- left_join(df, pop, by = c("date", "state_code", "year", "month"))
 df$rate <- ((df$n / days_in_month(df$date)) * 30) / df$population * 10^5 * 12
 df <- df %>% arrange(state, date)

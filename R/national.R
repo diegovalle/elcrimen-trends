@@ -18,7 +18,14 @@ df$n[22] <- df$n[22] + 76
 df$n[1:12] <- df$n[1:12] + c(56,67,57,49,86,73,93,69,74,63,89,73)
 
 
-pop <- monthly_pop("total") %>% filter(year %in% 2015:2019)
+#pop <- monthly_pop("total") %>% filter(year %in% 2015:max(df$year))
+pop <- read_csv("data/national_pop.csv", col_types = cols(
+  state_name = col_character(),
+  state_code = col_double(),
+  year = col_double(),
+  month = col_double(),
+  population = col_double()
+))
 df$pop <- pop$population[1:nrow(df)]
 df$rate <- ((df$n / df$dim) * 30) / df$pop * 10^5 * 12
 
