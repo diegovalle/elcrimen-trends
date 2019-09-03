@@ -1,0 +1,8 @@
+# RStudio files
+.Rproj.user/
+# Don't store intermediate files
+cache/*
+.Rproj.user
+*.png
+*.RData
+secrets-elcrimen.yml
