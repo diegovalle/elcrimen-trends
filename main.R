@@ -3,7 +3,7 @@
 if (Sys.getenv("CI") == "true") {
   print(packageVersion("dplyr"))
   # tidybayes need dplyr >= 0.8.0
-  install.packages(c("dplyr", "ggplot2", "rstanarm"))
+  update.packages(c("dplyr", "ggplot2", "rstanarm"))
 }
 
 ## Auto-Install packages
@@ -22,6 +22,11 @@ options(stringsAsFactors = FALSE)
 # Check if dplyr was updated
 if (packageVersion("dplyr") < "0.8.0")
   quit(status = 1)
+
+# install roboto condesced
+if (Sys.getenv("CI") == "true") {
+  hrbrthemes::import_roboto_condensed() 
+}
 
 source("R/national.R")
 source("R/states.R")

@@ -46,7 +46,7 @@ df$duration <- NULL
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
                  family = poisson, 
                  random = ~(1 | state), 
-                 data = df, chains = 4, iter = 4000,
+                 data = df, chains = 2, iter = 1000,
                  adapt_delta = .99, cores = 2)
 save(m1, file = "output/m1_states.RData")
 
@@ -60,7 +60,7 @@ pp_check(m1, plotfun = "ppc_ecdf_overlay")
 
 df$duration <- duration
 
-add_fitted_draws(df, m1) %>%
+add_fitted_draws(na.omit(df), m1) %>%
   ggplot(aes(x = date, y = n)) +
   stat_lineribbon(aes(y = .value), alpha = 1) +
   geom_point(color = "#fc9272", alpha = .5, size = .6) +

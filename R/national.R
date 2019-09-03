@@ -153,15 +153,15 @@ ggsave("graphs/time_trend.png", height = 7, width = 13, dpi = 100)
 #   scale_color_brewer(palette = "Set2")
 
 
-# add_predicted_draws(df[, c("date", "n", "time", "month")], m1) %>%
-#   ggplot(aes(x = date, y = n)) +
-#   stat_lineribbon(aes(y =  .prediction)) +
-#   geom_point(color = "#ef3b2c", size = 1) +
-#   expand_limits(y = 0) +
-#   scale_fill_brewer(palette = "Greys") +
-#   scale_color_brewer(palette = "Set2") +
-#   labs(title = "Modelo con estacionalidad",
-#        caption = "Fuente: SNSP víctimas y CONAPO con datos del 2015") +
-#   theme_ipsum()
-# ggsave("graphs/predicted.png", height = 7, width = 14, dpi = 100)
+add_predicted_draws(na.omit(df[, c("date", "n", "time", "month")]), m1) %>%
+  ggplot(aes(x = date, y = n)) +
+  stat_lineribbon(aes(y =  .prediction)) +
+  geom_point(color = "#ef3b2c", size = 1) +
+  expand_limits(y = 0) +
+  scale_fill_brewer(palette = "Greys") +
+  scale_color_brewer(palette = "Set2") +
+  labs(title = "Modelo con estacionalidad",
+       caption = "Fuente: SNSP víctimas y CONAPO con datos del 2015") +
+  theme_ipsum_rc()
+ggsave("graphs/predicted.png", height = 7, width = 14, dpi = 100)
 
