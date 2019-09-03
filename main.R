@@ -1,8 +1,10 @@
 ## This program does
 
-print(packageVersion("dplyr"))
-# tidybayes need dplyr >= 0.8.0
-install.packages("dplyr")
+if (Sys.getenv("CI") == "true") {
+  print(packageVersion("dplyr"))
+  # tidybayes need dplyr >= 0.8.0
+  install.packages(c("dplyr", "ggplot2", "rstanarm"))
+}
 
 ## Auto-Install packages
 .packs <- c("readr", "dplyr", "zoo", "ggplot2", "mgcv",
