@@ -25,7 +25,7 @@ blocks:
             - docker images
             - ls
             - pwd
-            - docker run --entrypoint /bin/sh -v "/home/semaphore/elcrimen-trends":/elcrimen jrnold/rstan -c "cd /elcrimen && Rscript main.R"
+            - docker run --entrypoint /bin/sh -e CI="true" -v "/home/semaphore/elcrimen-trends":/elcrimen jrnold/rstan -c "cd /elcrimen && Rscript main.R"
       epilogue:
         commands:
           - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip output/* graphs/* && ./upload_to_b2.sh elcrimen.zip; fi
