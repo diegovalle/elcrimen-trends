@@ -25,7 +25,8 @@ pop <- read_csv("data/national_pop.csv", col_types = cols(
   year = col_double(),
   month = col_double(),
   population = col_double()
-))
+)) %>% 
+  filter(year %in% 2015:max(df$year))
 df$pop <- pop$population[1:nrow(df)]
 df$rate <- ((df$n / df$dim) * 30) / df$pop * 10^5 * 12
 
@@ -56,8 +57,8 @@ ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 
 ## Estacionaliad simple
 m1 <- stan_gamm4(n ~ s(time) + s(month,  bs = 'cc', k = 12) + offset(log(duration)), 
-                 data = df,  control = list(max_treedepth = 15),
-                 adapt_delta = .9999, family = poisson, cores = 2)
+                 data = df,  control = list(max_treedepth = 20),
+                 adapt_delta = .999, family = poisson, cores = 2, seed = 12345)
 save(m1, file = "output/m1_national.RData")
 # m2 <- stan_gamm4(log(rate) ~ s(time) + rate.lag12 + s(month,  bs = 'cc', k = 12), data = df[13:55,], 
 #                  adapt_delta = .999)
@@ -73,10 +74,10 @@ save(m1, file = "output/m1_national.RData")
 #(comp <- compare_models(loo1, loo2))#, loo3, loo4))
 
 # model checks
-plot_nonlinear(m1)
-plot_nonlinear(m1, smooths = "s(time)")
-pp_check(m1)
-pp_check(m1, plotfun = "ppc_ecdf_overlay")
+# plot_nonlinear(m1)
+# plot_nonlinear(m1, smooths = "s(time)")
+# pp_check(m1)
+# pp_check(m1, plotfun = "ppc_ecdf_overlay")
 
 first_deriv_national <- function(m1, df) {
   df2 <- df
@@ -96,7 +97,7 @@ first_deriv_national <- function(m1, df) {
   
   
   d1 <- ((sims_n - sims_o) / eps) 
-  apply(d1, 2,  function(x) quantile(x, c(.025, .975)))
+  apply(d1, 2,  function(x) quantile(x, c(.05, .95)))
 }
 fd_last <- first_deriv_national(m1, df)[, nrow(df)]
 if (fd_last[1] < 0 & fd_last[2] < 0) {
@@ -112,15 +113,12 @@ if (fd_last[1] < 0 & fd_last[2] < 0) {
 
 df$duration <- log(1)
 inc <- grep("s\\(time\\).*", colnames(predict(m1$jam, df, type = "lpmatrix")))
-sims <- as.matrix(m1)[, c(1,inc)] %*% t(as.matrix(m1$x[, c(1,inc)])) %>% as.data.frame()
+sims <- as.matrix(m1)[, c(1,inc)] %*% t(as.matrix(m1$x[, c(1,inc)])) %>% as.data.frame()# substract offset
+sims[,] <- apply(sims[,], 2, function(x) x - log(df$pop[1]/100000))
 sims$sim <- 1:nrow(sims)
 sims <- sims[sample(1:4000, 1000),]
-
-# substract offset
-sims[,] <- apply(sims[,], 2, function(x) x - log(df$pop[1]/100000))
-
-sims <- gather(sims, "time", "rate", -sim) %>%
-  mutate(time = as.numeric(time)) %>%
+sims <- gather(data.frame(sims), "time", "rate", -sim) %>%
+  mutate(time = as.numeric(str_replace(time, "V", ""))) %>%
   arrange(sim, time)
 sims$date <- seq(as.Date("2015-01-01"), as.Date(max(df$date)), by = "month")
 df$sim <- NA
@@ -151,9 +149,10 @@ ggsave("graphs/time_trend.png", height = 7, width = 13, dpi = 100)
 #   geom_point() +
 #   scale_fill_brewer(palette = "Greys") +
 #   scale_color_brewer(palette = "Set2")
-
-
-add_predicted_draws(na.omit(df[, c("date", "n", "time", "month")]), m1) %>%
+print("add_predicted_draws")
+df$duration <- duration
+add_predicted_draws(na.omit(df[, c("date", "n", "time", "month",
+                                   "duration")]), m1, n = 10^3) %>%
   ggplot(aes(x = date, y = n)) +
   stat_lineribbon(aes(y =  .prediction)) +
   geom_point(color = "#ef3b2c", size = 1) +

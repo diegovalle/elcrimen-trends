@@ -33,4 +33,19 @@ rstantools \
 shinystan \
 ggmcmc \
 tidybayes \
+readr \
+dplyr \
+zoo  \
+ggplot2 \
+mgcv \
+lubridate \
+stringr  \
+loo \
+jsonlite \
+scales \
+directlabels \
+hbrthemes \
+tidyr
+betareg \
+bayesplot \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds

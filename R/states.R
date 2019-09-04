@@ -26,8 +26,9 @@ pop <- read_csv("data/states_pop.csv", col_types = cols(
   month = col_double(),
   population = col_double(),
   date = col_date(format = "")
-))
-pop <- pop %>% mutate(date = as.Date(str_c(year, "-", month, "-01")))
+))  %>% 
+  filter(year %in% 2015:max(df$year)) %>% 
+  mutate(date = as.Date(str_c(year, "-", month, "-01")))
 df <- left_join(df, pop, by = c("date", "state_code", "year", "month"))
 df$rate <- ((df$n / days_in_month(df$date)) * 30) / df$population * 10^5 * 12
 df <- df %>% arrange(state, date)
@@ -47,7 +48,7 @@ m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(l
                  family = poisson, 
                  random = ~(1 | state), 
                  data = df, chains = 2, iter = 1000,
-                 adapt_delta = .99, cores = 2)
+                 adapt_delta = .99, cores = 2, seed = 12345)
 save(m1, file = "output/m1_states.RData")
 
 # bayesplot::mcmc_trace(as.array(m1), pars = c( "sigma"),
@@ -59,7 +60,6 @@ pp_check(m1)
 pp_check(m1, plotfun = "ppc_ecdf_overlay")
 
 df$duration <- duration
-
 add_fitted_draws(na.omit(df), m1) %>%
   ggplot(aes(x = date, y = n)) +
   stat_lineribbon(aes(y = .value), alpha = 1) +
@@ -127,8 +127,8 @@ sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   sims[,] <- apply(sims[,], 2, 
                         function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
   sims$sim <- 1:nrow(sims)
-  sims <- gather(sims, "time", "rate", -sim) %>%
-    mutate(time = as.numeric(time)) %>%
+  sims <- gather(data.frame(sims), "time", "rate", -sim) %>%
+    mutate(time = as.numeric(str_replace(time, "V", ""))) %>%
     arrange(sim, time)
   sims$date <- dates
   sims$state <- state_name
