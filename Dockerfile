@@ -45,7 +45,7 @@ jsonlite \
 scales \
 directlabels \
 hbrthemes \
-tidyr
+tidyr \
 betareg \
 bayesplot \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
