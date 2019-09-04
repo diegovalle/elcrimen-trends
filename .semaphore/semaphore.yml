@@ -4,6 +4,8 @@ agent:
   machine:
     type: e1-standard-2
     os_image: ubuntu1804
+execution_time_limit:
+  hours: 3
 blocks:
   - name: "Inspect Linux environment"
     task:
@@ -13,7 +15,7 @@ blocks:
             - echo $SEMAPHORE_PIPELINE_ID
             - echo $HOME
             - echo $SEMAPHORE_GIT_DIR
-  - name: "Docker Image"
+  - name: "Docker Image
     task:
       secrets:
         - name: elcrimen-secrets

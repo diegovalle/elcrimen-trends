@@ -57,9 +57,16 @@ ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 
 ## Estacionaliad simple
 m1 <- stan_gamm4(n ~ s(time) + s(month,  bs = 'cc', k = 12) + offset(log(duration)), 
-                 data = df,  control = list(max_treedepth = 20),
-                 adapt_delta = .999, family = poisson, cores = 2, seed = 12345)
+                 data = df,  
+                 iter = 2000, 
+                 control = list(max_treedepth = 15),
+                 adapt_delta = .999, 
+                 family = poisson, 
+                 cores = 2, 
+                 seed = 12345)
 save(m1, file = "output/m1_national.RData")
+#load("output/m1_national.RData")
+#pairs(m1, pars = c("s(time).1", "(Intercept)"))
 # m2 <- stan_gamm4(log(rate) ~ s(time) + rate.lag12 + s(month,  bs = 'cc', k = 12), data = df[13:55,], 
 #                  adapt_delta = .999)
 #m2 <- stan_gamm4(rate ~ s(time) + s(month, k = 12), data = df, adapt_delta = .999)
@@ -114,7 +121,8 @@ if (fd_last[1] < 0 & fd_last[2] < 0) {
 df$duration <- log(1)
 inc <- grep("s\\(time\\).*", colnames(predict(m1$jam, df, type = "lpmatrix")))
 sims <- as.matrix(m1)[, c(1,inc)] %*% t(as.matrix(m1$x[, c(1,inc)])) %>% as.data.frame()# substract offset
-sims[,] <- apply(sims[,], 2, function(x) x - log(df$pop[1]/100000))
+# Add offset in 100,000 persons
+sims <- sims - log(df$pop[1]/100000)
 sims$sim <- 1:nrow(sims)
 sims <- sims[sample(1:4000, 1000),]
 sims <- gather(data.frame(sims), "time", "rate", -sim) %>%

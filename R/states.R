@@ -47,8 +47,12 @@ df$duration <- NULL
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
                  family = poisson, 
                  random = ~(1 | state), 
-                 data = df, chains = 2, iter = 1000,
-                 adapt_delta = .99, cores = 2, seed = 12345)
+                 data = df, 
+                 chains = 4, 
+                 iter = 500,
+                 adapt_delta = .99, 
+                 cores = 2, 
+                 seed = 12345)
 save(m1, file = "output/m1_states.RData")
 
 # bayesplot::mcmc_trace(as.array(m1), pars = c( "sigma"),
@@ -145,9 +149,10 @@ sims <- sims %>%
 
 p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   geom_line(alpha = 0.1, aes(color = trend), size = .05) +
-  scale_color_manual("first derivative",
+  scale_color_manual("tendencia",
                      values = c("positive" = "#e41a1c", 
                                 "negative" = "#1f78b4"), 
+                     labels = c("positiva", "negativa", "no significativa"),
                                 na.value = "#cab2d6") +
   geom_point(data = df, aes(date, rate, group = state), 
              fill = "#f8766d", 
@@ -159,7 +164,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   xlab("fecha") +
   ylab("tasa anualizada") +
   labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\ndel GAM ajustado por estacionalidad",
-       subtitle = "Incluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con\nmeses de 30 días.",
+       subtitle = "La tendencia del último mes corresponde al color de cada estado (primera derivada, intervalo de credibilidad del 90%). Incluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con\nmeses de 30 días.",
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
   theme_ft_rc() +
   facet_wrap(~state, scale = "free_y", ncol = 4) + 
