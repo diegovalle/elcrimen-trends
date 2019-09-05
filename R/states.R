@@ -163,7 +163,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   expand_limits(y = 0) +
   xlab("fecha") +
   ylab("tasa anualizada") +
-  labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\ndel GAM ajustado por estacionalidad",
+  labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\nde un modelo aditivo ajustado por estacionalidad, por estado",
        subtitle = "La tendencia del último mes corresponde al color de cada estado (primera derivada, intervalo de credibilidad del 90%). Incluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con\nmeses de 30 días.",
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
   theme_ft_rc() +

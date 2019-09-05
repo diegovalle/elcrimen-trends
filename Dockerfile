@@ -4,12 +4,12 @@ MAINTAINER Diego Valle
 # From https://hub.docker.com/r/jrnold/rstan/dockerfile
 
 RUN apt-get update \
-&& apt-get install -y --no-install-recommends apt-utils ed libnlopt-dev \
+&& apt-get install -y --no-install-recommends apt-utils ed libnlopt-dev libgdal-dev libudunits2-dev cargo jags libcairo2-dev libxt-dev libgeos-dev \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/
   
-  # Install rstan
-  RUN install2.r --error --deps TRUE \
+# Install rstan
+RUN install2.r --error --deps TRUE \
 rstan \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
@@ -48,4 +48,16 @@ hbrthemes \
 tidyr \
 betareg \
 bayesplot \
+extrafont \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
+
+# Install Roboto condensed
+RUN wget -O /tmp/rc.zip https://fonts.google.com/download?family=Roboto%20Condensed \
+&& cd /usr/share/fonts \
+&& sudo mkdir googlefonts \
+&& cd googlefonts \
+&& sudo unzip -d . /tmp/rc.zip \
+&& sudo chmod -R --reference=/usr/share/fonts/truetype /usr/share/fonts/googlefonts \
+&& sudo fc-cache -fv \
+&& rm -rf /tmp/rc.zip \
+&& Rscript --slave --no-save --no-restore-history -e "extrafont::font_import(prompt=FALSE)"
