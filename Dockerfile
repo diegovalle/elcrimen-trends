@@ -44,10 +44,8 @@ loo \
 jsonlite \
 scales \
 directlabels \
-hbrthemes \
 tidyr \
 betareg \
-bayesplot \
 extrafont \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
