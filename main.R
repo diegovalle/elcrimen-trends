@@ -1,9 +1,6 @@
 ## This program does
 
 if (Sys.getenv("CI") == "true") {
-  print(packageVersion("dplyr"))
-  # tidybayes need dplyr >= 0.8.0
-  #install.packages(c("dplyr", "ggplot2", "rstanarm"))
   install.packages("hrbrthemes", repos = "https://cinc.rud.is")
 }
 
