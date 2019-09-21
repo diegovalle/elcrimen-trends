@@ -24,8 +24,7 @@ pop <- read_csv("data/states_pop.csv", col_types = cols(
   state_code = col_double(),
   year = col_double(),
   month = col_double(),
-  population = col_double(),
-  date = col_date(format = "")
+  population = col_double()
 ))  %>% 
   filter(year %in% 2015:max(df$year)) %>% 
   mutate(date = as.Date(str_c(year, "-", month, "-01")))
@@ -48,12 +47,13 @@ m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(l
                  family = poisson, 
                  random = ~(1 | state), 
                  data = df, 
-                 chains = 4, 
+                 chains = 2, 
                  iter = 500,
                  adapt_delta = .99, 
                  cores = 2, 
                  seed = 12345)
 save(m1, file = "output/m1_states.RData")
+#load("output/m1_states.RData")
 
 # bayesplot::mcmc_trace(as.array(m1), pars = c( "sigma"),
 #            facet_args = list(ncol = 1, strip.position = "left"))
@@ -64,14 +64,14 @@ pp_check(m1)
 pp_check(m1, plotfun = "ppc_ecdf_overlay")
 
 df$duration <- duration
-add_fitted_draws(na.omit(df), m1) %>%
+p <- add_fitted_draws(na.omit(df), m1) %>%
   ggplot(aes(x = date, y = n)) +
   stat_lineribbon(aes(y = .value), alpha = 1) +
   geom_point(color = "#fc9272", alpha = .5, size = .6) +
   scale_fill_brewer(palette = "Greys") +
   scale_color_brewer(palette = "Set2") +
-  facet_wrap(~state, scale = "free_y")
-ggsave("graphs/predicted_states.png", height = 7, width = 14, dpi = 100)
+  facet_wrap(~state, scale = "free_y", ncol = 4)
+ggsave("graphs/predicted_states.png", plot = p, height = 20, width = 14, dpi = 100)
 
 
 dates <- seq(as.Date(min(df$date)), as.Date(max(df$date)), by = "month")
@@ -100,20 +100,19 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   qt <- quantile(d1[, ndates], c(.05, .95))
   med <- median(d1[, ndates])
   if (qt[1] < 0 & qt[2] < 0)
-    return(c(state_name, "negative", med))
+    return(data.frame(state = state_name, 
+                      trend = "negative", 
+                      fd = med))
   else if (qt[1] > 0 & qt[2] > 0)
-    return(c(state_name, "positive", med))
+    return(data.frame(state = state_name, 
+                      trend = "positive", 
+                      fd = med))
   else
-    return(c(state_name, NA, med))
+    return(data.frame(state = state_name, 
+                      trend = NA, 
+                      fd = med))
 })
 )
-
-#apply(d1, 2,  function(x) quantile(x, c(.025, .975)))
-trends <- as.data.frame(trends)
-names(trends) <- c("state", "trend", "fd")
-trends$fd <- as.numeric(trends$fd)
-
-
 
 sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   state_name <- x
@@ -132,7 +131,7 @@ sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
                         function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
   sims$sim <- 1:nrow(sims)
   sims <- gather(data.frame(sims), "time", "rate", -sim) %>%
-    mutate(time = as.numeric(str_replace(time, "V", ""))) %>%
+    mutate(time = as.numeric(str_replace(time, "X", ""))) %>%
     arrange(sim, time)
   sims$date <- dates
   sims$state <- state_name
@@ -149,10 +148,11 @@ sims <- sims %>%
 
 p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   geom_line(alpha = 0.1, aes(color = trend), size = .05) +
-  scale_color_manual("tendencia",
+  scale_color_manual("tendencia\núltimo mes",
                      values = c("positive" = "#e41a1c", 
                                 "negative" = "#1f78b4"), 
-                     labels = c("positiva", "negativa", "no significativa"),
+                     labels = c("al alza", "a la baja", "no significativa"),
+                     breaks = c("al alza", "a la baja", NA),
                                 na.value = "#cab2d6") +
   geom_point(data = df, aes(date, rate, group = state), 
              fill = "#f8766d", 
@@ -163,12 +163,37 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   expand_limits(y = 0) +
   xlab("fecha") +
   ylab("tasa anualizada") +
-  labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\nde un modelo aditivo ajustado por estacionalidad, por estado",
-       subtitle = "La tendencia del último mes corresponde al color de cada estado (primera derivada, intervalo de credibilidad del 90%). Incluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con\nmeses de 30 días.",
+  labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\nde un modelo aditivo multinivel ajustado por estacionalidad, por estado",
+       subtitle = "La tendencia del último mes corresponde al color de cada estado (primera derivada, intervalo de credibilidad del 90%).\nIncluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con meses de 30 días.",
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
-  theme_ft_rc() +
+  theme_ft_rc(base_family = "Arial Narrow") +
   facet_wrap(~state, scale = "free_y", ncol = 4) + 
   guides(color = guide_legend(override.aes = list(size = 2, alpha = 1)))
 ggsave("graphs/state_time_trend.png", plot = p, height = 20, width = 14, 
        dpi = 100)
 
+
+jsondata <- lapply(as.character(unique(sims$state)), function(x) {
+  state_name <- x
+  print(x)
+  inc <- grep(state_name, colnames(predict(m1$jam, type = "lpmatrix")))
+  binc <- grep(paste0("b\\[\\(Intercept\\) state:", 
+                      str_replace_all(state_name," ", "_"),
+                      "\\]$"), 
+               colnames(m1$x))
+  X0 <- as.matrix(m1$x)[which(df$state == state_name), c(1, inc)]
+  sims <- as.matrix(m1)[, c(1, inc)] %*% t(X0)
+  b = as.matrix(m1)[, binc, drop = FALSE]
+  sims <- apply(sims, 2, function(x) {x + b}) %>% as.data.frame()
+  # substract offset
+  sims[,] <- apply(sims[,], 2, 
+                   function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
+  
+  ll <- apply(sims[,], 2, function(x) quantile(exp(x)*12, c(.05, .5, .95)))
+  ll <- rbind(ll, df[which(df$state == state_name),]$rate)
+  rownames(ll) <- c("l", "m", "u", "r")
+  ll <- lst(!!state_name := ll, trend = trends[which(trends$state == state_name), ]$trend)
+  return(ll)
+})
+
+write(toJSON(jsondata), "output/states_trends.json")

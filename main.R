@@ -11,7 +11,7 @@ if (Sys.getenv("CI") == "true") {
 .packs <- c("readr", "dplyr", "zoo", "ggplot2", "mgcv",
             "lubridate", "stringr", "loo", "rstanarm",
             "tidybayes", "jsonlite", "scales", "season", "directlabels",
-            "tidyr", "betareg", "bayesplot")
+            "hrbrthemes", "tidyr", "betareg", "bayesplot")
 .success <- suppressWarnings(sapply(.packs, require, character.only = TRUE))
 if (length(names(.success)[!.success])) {
   install.packages(names(.success)[!.success])
@@ -27,6 +27,10 @@ if (packageVersion("dplyr") < "0.8.0")
 # install roboto condesced
 if (Sys.getenv("CI") == "true") {
   hrbrthemes::import_roboto_condensed() 
+  hrbrthemes::import_econ_sans()
+  hrbrthemes::import_public_sans()
+  hrbrthemes::import_plex_sans()
+  hrbrthemes::import_titillium_web()
 }
 
 source("R/national.R")
