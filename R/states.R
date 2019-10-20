@@ -44,11 +44,11 @@ duration <- df$duration
 df$duration <- NULL
 
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
-                 family = poisson, 
+                 family = poisson,
                  random = ~(1 | state), 
                  data = df, 
                  chains = 2, 
-                 iter = 500,
+                 iter = 1000,
                  adapt_delta = .99, 
                  cores = 2, 
                  seed = 12345)
@@ -152,7 +152,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
                      values = c("positive" = "#e41a1c", 
                                 "negative" = "#1f78b4"), 
                      labels = c("al alza", "a la baja", "no significativa"),
-                     breaks = c("al alza", "a la baja", NA),
+                     breaks = c("positive", "negative", NA),
                                 na.value = "#cab2d6") +
   geom_point(data = df, aes(date, rate, group = state), 
              fill = "#f8766d", 
@@ -191,6 +191,7 @@ jsondata <- lapply(as.character(unique(sims$state)), function(x) {
   
   ll <- apply(sims[,], 2, function(x) quantile(exp(x)*12, c(.05, .5, .95)))
   ll <- rbind(ll, df[which(df$state == state_name),]$rate)
+  ll <- round(ll, 1)
   rownames(ll) <- c("l", "m", "u", "r")
   ll <- lst(!!state_name := ll, trend = trends[which(trends$state == state_name), ]$trend)
   return(ll)

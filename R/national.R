@@ -59,11 +59,11 @@ ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 m1 <- stan_gamm4(n ~ s(time) + s(month,  bs = 'cc', k = 12) + offset(log(duration)), 
                  data = df,  
                  iter = 4000, 
-                 chains = 2,
+                 chains = 4,
                  control = list(max_treedepth = 15),
                  adapt_delta = .999, 
                  family = poisson, 
-                 cores = 2, 
+                 cores = 4,
                  seed = 12345)
 save(m1, file = "output/m1_national.RData")
 #load("output/m1_national.RData")
