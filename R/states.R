@@ -43,8 +43,8 @@ df <- df %>%
 duration <- df$duration 
 df$duration <- NULL
 
-m1 <- stan_gamm4(rate ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
-                 #family = poisson,
+m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
+                 family = poisson,
                  random = ~(1 | state), 
                  data = df, 
                  chains = 2, 
