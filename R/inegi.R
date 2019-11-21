@@ -20,25 +20,40 @@ ggplot(inegi, aes(month, rate_scaled, color = year, group = year)) +
   geom_line()
 
 
-m1 <- stan_gamm4(rate ~ s(time) + s(month,  bs = 'cc', k = 12), data = inegi, 
-                 adapt_delta = .99)
-m2 <- stan_gamm4(rate ~ s(time, bs = "gp", m=c(2)) + s(month,  bs = 'cc', k = 12), data = inegi, 
-                 adapt_delta = .99)
-m3 <- stan_gamm4(rate ~ s(time), data = inegi, adapt_delta = .99)
-m4 <- stan_gamm4(rate ~ s(time) + s(month, k = 12), data = inegi, adapt_delta = .99)
+m1 <- stan_gamm4(count ~ s(time) + s(month,  bs = 'cc', k = 12), data = inegi, 
+                 adapt_delta = .99, family = poisson)
+m2 <- stan_gamm4(count ~ s(time, bs = "gp") + s(month,  bs = 'cp', k = 12), 
+                 data = inegi, 
+                 adapt_delta = .99, family = poisson)
+m3 <- stan_gamm4(count ~ s(time), data = inegi, adapt_delta = .99, 
+                 family = poisson)
+m4 <- stan_gamm4(count ~ s(time) + s(month, k = 12), data = inegi, 
+                 adapt_delta = .99, family = poisson)
 
 loo1 <- loo(m1)
 loo2 <- loo(m2)
 loo3 <- loo(m3)
 loo4 <- loo(m4)
-(comp <- compare_models(loo1, loo2, loo3, loo4))
+(comp <- loo_compare(loo1, loo2, loo3, loo4))
 
-
-plot_nonlinear(m1)
+summary(m1, digits = 3)
+plot_nonlinear(m4)
 plot_nonlinear(m1, smooths = "s(time)")
 plot_nonlinear(m1, smooths = "s(month)")
 pp_check(m1)
 pp_check(m1, plotfun = "ppc_ecdf_overlay")
 
 
-
+m2 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(log(duration)), 
+                 data = df,
+                 iter = 2000, 
+                 chains = 4,
+                 control = list(max_treedepth = 15),
+                 adapt_delta = .999, 
+                 family = poisson, 
+                 cores = 4,
+                 seed = 12345)
+df$duration <- log(1)
+loo1 <- loo(m1, k_threshold = 0.7)
+loo2 <- loo(m2, k_threshold = 0.7)
+(comp <- loo_compare(loo1, loo2))

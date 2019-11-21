@@ -34,8 +34,22 @@ duration <- days_in_month(df$date) / (365/12) * (df$pop / df$pop[1])
 
 p1 <- ggplot(df, aes(date, rate)) +
   geom_point()
-
 p1 + geom_line()
+
+
+df$diff <- c(rep(NA, 12), diff(df$rate, 12))
+ggplot(filter(df, year >= 2016), aes(date, diff)) +
+  geom_line() +
+  geom_smooth(se = FALSE, method = 'loess',formula = 'y ~ x') +
+  theme_ft_rc() +
+  geom_hline(yintercept = 0) +
+  ylab("diferencia en tasa anualizada") +
+  xlab("fecha") +
+  labs(title = "Diferencias en Tasas de Homicidio con el Mismo Mes del Año Pasado",
+       subtitle = "Incluye homicidios dolosos y feminicidios. Las diferencias son en tasas son por 100,000 habitantes y con\nmeses de 30 días.",
+       caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015")
+ggsave("graphs/diff.png", height = 6, width = 12, dpi = 100)
+
 
 
 p <- ggplot(df, aes(month, rate, group = year, color = year)) +
@@ -52,19 +66,23 @@ p <- ggplot(df, aes(month, rate, group = year, color = year)) +
 direct.label(p, "top.bumptwice")
 ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 
+
+
 # m <- brm(rate ~ s(time) + s(month,  bs = 'cc', k = 12), data = df,
 #          autocor = cor_arma(~ time, 0, 1, 1))
 
 ## Estacionaliad simple
-m1 <- stan_gamm4(n ~ s(time) + s(month,  bs = 'cc', k = 12) + offset(log(duration)), 
-                 data = df,  
-                 iter = 4000, 
+m1 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(log(duration)), 
+                 data = df,
+                 iter = 2000, 
                  chains = 4,
                  control = list(max_treedepth = 15),
                  adapt_delta = .999, 
                  family = poisson, 
                  cores = 4,
                  seed = 12345)
+                 #prior = normal(location = 0, scale = 10))
+                 #prior_smooth = normal(location = .5, scale = 1, autoscale = FALSE))
 save(m1, file = "output/m1_national.RData")
 #load("output/m1_national.RData")
 #pairs(m1, pars = c("s(time).1", "(Intercept)"))
@@ -82,6 +100,8 @@ save(m1, file = "output/m1_national.RData")
 #(comp <- compare_models(loo1, loo2))#, loo3, loo4))
 
 # model checks
+summary(m1, digits = 3)
+prior_summary(m1)
 # plot_nonlinear(m1)
 # plot_nonlinear(m1, smooths = "s(time)")
 # pp_check(m1)
@@ -99,13 +119,13 @@ first_deriv_national <- function(m1, df) {
   newDFeps$duration <- log(1)
   X1 <- predict(m1$jam, newDFeps, type = 'lpmatrix')[, c(1,inc)]
   
-  sims_o <- as.matrix(m1)[, 1:10] %*% t(X0)
+  sims_o <- as.matrix(m1)[, 1:(length(inc) + 1)] %*% t(X0)
   dim(sims_o)
-  sims_n <- as.matrix(m1)[, 1:10] %*% t(X1)
+  sims_n <- as.matrix(m1)[, 1:(length(inc) + 1)] %*% t(X1)
   
   
   d1 <- ((sims_n - sims_o) / eps) 
-  apply(d1, 2,  function(x) quantile(x, c(.05, .95)))
+  apply(d1, 2,  function(x) quantile(x, c(.025, .975)))
 }
 fd_last <- first_deriv_national(m1, df)[, nrow(df)]
 if (fd_last[1] < 0 & fd_last[2] < 0) {
