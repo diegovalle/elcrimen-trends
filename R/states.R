@@ -43,12 +43,14 @@ df <- df %>%
 duration <- df$duration 
 df$duration <- NULL
 
+iterations_states <- 1200
+
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
                  family = poisson,
                  random = ~(1 | state), 
                  data = df, 
                  chains = 2, 
-                 iter = 1000,
+                 iter = iterations_states,
                  adapt_delta = .99, 
                  cores = 2, 
                  seed = 12345)
@@ -163,8 +165,18 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   expand_limits(y = 0) +
   xlab("fecha") +
   ylab("tasa anualizada") +
-  labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\nde un modelo aditivo multinivel ajustado por estacionalidad, por estado",
-       subtitle = "La tendencia del último mes corresponde al color de cada estado (primera derivada, intervalo de credibilidad del 90%).\nIncluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con meses de 30 días.",
+  labs(title = str_c("Tasas de homicidio y ", iterations_states, " simulaciones del ", 
+                     "posterior de un modelo aditivo multinivel ajustado por ",
+                     "estacionalidad,\npor estado"),
+       subtitle = str_c("Los estados están ordenados por el valor de la ",
+                        "primera derivada durante el último mes y sus tasas ",
+                        "no son comparables\npor usar una escala diferente ", 
+                        "para facilitar la visualización de las tendencias.",
+                        "\n\nLa tendencia del último mes corresponde al color ",
+                        "de cada estado (primera derivada, intervalo de ",
+                        "credibilidad del 90%).\nIncluye homicidios dolosos ",
+                        "y feminicidios. Las tasas son por 100,000 habitantes ",
+                        "y con meses de 30 días."),
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
   theme_ft_rc(base_family = "Arial Narrow") +
   facet_wrap(~state, scale = "free_y", ncol = 4) + 

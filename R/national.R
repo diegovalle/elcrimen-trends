@@ -45,7 +45,7 @@ ggplot(filter(df, year >= 2016), aes(date, diff)) +
   geom_hline(yintercept = 0) +
   ylab("diferencia en tasa anualizada") +
   xlab("fecha") +
-  labs(title = "Diferencias en Tasas de Homicidio con el Mismo Mes del Año Pasado",
+  labs(title = "Diferencias en Tasas de Homicidioen México con el Mismo Mes del Año Pasado",
        subtitle = "Incluye homicidios dolosos y feminicidios. Las diferencias son en tasas son por 100,000 habitantes y con\nmeses de 30 días.",
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015")
 ggsave("graphs/diff.png", height = 6, width = 12, dpi = 100)
@@ -60,13 +60,13 @@ p <- ggplot(df, aes(month, rate, group = year, color = year)) +
   theme_ft_rc() +
   ylab("tasa anualizada") +
   xlab("mes") +
-  labs(title = "Tasas de Homicidio por Año",
+  labs(title = "Tasas de Homicidio por Año en México",
        subtitle = "Incluye homicidios dolosos y feminicidios. Las tasas son por 100,000 habitantes y con\nmeses de 30 días.",
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015")
 direct.label(p, "top.bumptwice")
 ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 
-
+iter_national <- 2000
 
 # m <- brm(rate ~ s(time) + s(month,  bs = 'cc', k = 12), data = df,
 #          autocor = cor_arma(~ time, 0, 1, 1))
@@ -74,7 +74,7 @@ ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 ## Estacionaliad simple
 m1 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(log(duration)), 
                  data = df,
-                 iter = 2000, 
+                 iter = iter_national, 
                  chains = 4,
                  control = list(max_treedepth = 15),
                  adapt_delta = .999, 
@@ -113,19 +113,22 @@ first_deriv_national <- function(m1, df) {
   inc <- grep("s\\(time\\).*", colnames(predict(m1$jam, df2, type = "lpmatrix")))
   X0 <- predict(m1$jam, df2, type = "lpmatrix")[, c(1,inc)]
   
-  eps <- 1e-7
+  eps <- .1
   newDFeps <- df 
   newDFeps$time <- df$time + eps
   newDFeps$duration <- log(1)
   X1 <- predict(m1$jam, newDFeps, type = 'lpmatrix')[, c(1,inc)]
   
   sims_o <- as.matrix(m1)[, 1:(length(inc) + 1)] %*% t(X0)
+  sims_o <- sims_o - log(df$pop[1]/100000)
+  sims_o <- exp(sims_o) * 12
   dim(sims_o)
   sims_n <- as.matrix(m1)[, 1:(length(inc) + 1)] %*% t(X1)
-  
+  sims_n <- sims_n - log(df$pop[1]/100000)
+  sims_n <- exp(sims_n) * 12
   
   d1 <- ((sims_n - sims_o) / eps) 
-  apply(d1, 2,  function(x) quantile(x, c(.025, .975)))
+  apply(d1, 2,  function(x) quantile(x, c(.05, .95)))
 }
 fd_last <- first_deriv_national(m1, df)[, nrow(df)]
 if (fd_last[1] < 0 & fd_last[2] < 0) {
@@ -162,7 +165,9 @@ ggplot(sims, aes(x = date, y = exp(rate)*12, group = sim)) +
   expand_limits(y = 0) +
   xlab("fecha") +
   ylab("tasa anualizada") +
-  labs(title = "Tasas de homicidio y 1000 simulaciones del posterior\nde un modelo aditivo ajustado por estacionalidad",
+  labs(title = str_c("Tasas de homicidio en México y ", iter_national, 
+                     " simulaciones del posterior\nde un modelo aditivo ",
+                     "ajustado por estacionalidad"),
        subtitle = sub_fd,
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
   theme_ft_rc()
