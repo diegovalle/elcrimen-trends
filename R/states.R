@@ -85,14 +85,14 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   #X0 <- predict(m1$jam, type = 'lpmatrix')[, c(1, inc)]
   
   
-  eps <- 1e-7
+  eps <- .1
   newDFeps <- df 
   newDFeps$time <- df$time + eps
   newDFeps$duration <- log(1)
-  X1 <- predict(m1$jam, newDFeps, type = 'lpmatrix')[, c(1, inc)]
+  X1 <- predict(m1$jam, newDFeps, type = 'lpmatrix')
   
   sims_o <- as.matrix(m1)[, c(1, inc)] %*% t(as.matrix(m1$x[which(df$state == state_name), c(1, inc)])) 
-  sims_n <- as.matrix(m1)[, c(1, inc)] %*% t(X1[which(df$state == state_name),])
+  sims_n <- as.matrix(m1)[, c(1, inc)] %*% t(X1[which(df$state == state_name), c(1, inc)])
   
   #100 x 10 * ndates * 10
   d1 <- ((sims_n - sims_o) / eps) 
