@@ -10,7 +10,7 @@ df <- read_csv("https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz"
   mutate(month = month(date)) %>%
   mutate(year = year(date)) %>%
   mutate(dim = days_in_month(date)) 
-
+print(max(df$date))
 
 # add missing oaxaca oct 2016 number
 df$n[22] <- df$n[22] + 76
@@ -66,7 +66,7 @@ p <- ggplot(df, aes(month, rate, group = year, color = year)) +
 direct.label(p, "top.bumptwice")
 ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 
-iter_national <- 2000
+iter_national <- 4000
 
 # m <- brm(rate ~ s(time) + s(month,  bs = 'cc', k = 12), data = df,
 #          autocor = cor_arma(~ time, 0, 1, 1))

@@ -43,7 +43,7 @@ df <- df %>%
 duration <- df$duration 
 df$duration <- NULL
 
-iterations_states <- 1200
+iterations_states <- 2000
 
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
                  family = poisson,
