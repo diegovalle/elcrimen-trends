@@ -47,6 +47,8 @@ directlabels \
 tidyr \
 betareg \
 extrafont \
+hrbrthemes \
+season \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
 # Install Roboto condensed
