@@ -179,7 +179,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
                         "y con meses de 30 días."),
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
   theme_ft_rc(base_family = "Arial Narrow") +
-  facet_wrap(~state, scale = "free_y", ncol = 4) + 
+  facet_wrap(~state, ncol = 4) + 
   guides(color = guide_legend(override.aes = list(size = 2, alpha = 1)))
 ggsave("graphs/state_time_trend.png", plot = p, height = 20, width = 14, 
        dpi = 100)
