@@ -160,7 +160,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
              fill = "#f8766d", 
              color = "black",
              shape = 21,
-             size = 1.1) +
+             size = .9) +
   theme_bw() +
   expand_limits(y = 0) +
   xlab("fecha") +
@@ -169,9 +169,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
                      "posterior de un modelo aditivo multinivel ajustado por ",
                      "estacionalidad,\npor estado"),
        subtitle = str_c("Los estados están ordenados por el valor de la ",
-                        "primera derivada durante el último mes y sus tasas ",
-                        "no son comparables\npor usar una escala diferente ", 
-                        "para facilitar la visualización de las tendencias.",
+                        "primera derivada durante el último mes.", 
                         "\n\nLa tendencia del último mes corresponde al color ",
                         "de cada estado (primera derivada, intervalo de ",
                         "credibilidad del 90%).\nIncluye homicidios dolosos ",
@@ -180,6 +178,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
        caption = "Fuente: SNSP víctimas y proyecciones del CONAPO con datos del 2015") +
   theme_ft_rc(base_family = "Arial Narrow") +
   facet_wrap(~state, ncol = 4) + 
+  scale_y_continuous(trans = 'log10') +
   guides(color = guide_legend(override.aes = list(size = 2, alpha = 1)))
 ggsave("graphs/state_time_trend.png", plot = p, height = 20, width = 14, 
        dpi = 100)
