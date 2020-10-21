@@ -23,6 +23,7 @@ blocks:
         - name: Build with docker
           commands:
             - checkout
+            - echo $DOCKER_USERNAME
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker pull diegovalle/docker-rstanarm:latest
             - docker images
