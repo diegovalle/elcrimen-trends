@@ -1,6 +1,19 @@
 
 
-df <- read_csv("https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz") %>%
+df <- read_csv("https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz",
+               col_types = cols(
+                 state_code = col_double(),
+                 state = col_character(),
+                 bien_juridico = col_character(),
+                 tipo = col_character(),
+                 subtipo = col_character(),
+                 modalidad = col_character(),
+                 date = col_character(),
+                 sex = col_character(),
+                 age_group = col_character(),
+                 population = col_double(),
+                 count = col_double()
+               )) %>%
   filter(subtipo == "HOMICIDIO DOLOSO" | subtipo == "FEMINICIDIO") %>%
   #filter(date >= "2016-01") %>%
   group_by(date, state, state_code) %>%
@@ -40,19 +53,23 @@ df <- df %>%
   group_by(state, state_code) %>%
   mutate(duration = dim * (population / population[1])) %>%
   ungroup()
+
+
 duration <- df$duration 
 df$duration <- NULL
 
+
 iterations_states <- 1500
 
-m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) + offset(log(duration)), #,
+m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
+                   offset(log(duration)), #,
                  family = poisson,
                  random = ~(1 | state), 
                  data = df, 
                  chains = 2, 
                  iter = iterations_states,
                  adapt_delta = .99, 
-                 cores = 2, 
+                 cores = parallel::detectCores(), 
                  seed = 12345)
 save(m1, file = "output/m1_states.RData")
 #load("output/m1_states.RData")
@@ -85,7 +102,7 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   #X0 <- predict(m1$jam, type = 'lpmatrix')[, c(1, inc)]
   
   
-  eps <- .1
+  eps <- 30
   newDFeps <- df 
   newDFeps$time <- df$time + eps
   newDFeps$duration <- log(1)
@@ -96,6 +113,7 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   
   #100 x 10 * ndates * 10
   d1 <- ((sims_n - sims_o) / eps) 
+  (sims_n - sims_o)[1:5, 1:5]
   dim(d1)
   d1[1:5, 1:5]
   sum(d1[, ndates] >= 0)
@@ -142,11 +160,19 @@ sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
 }))
 
 sims <- left_join(sims, trends, by = "state")
-sims <- sims %>%
-  mutate(fd = as.numeric(fd)) %>%
-  arrange(desc(fd)) %>%
-  mutate(state = factor(state, levels = unique(state)))
 
+
+sims <- sims %>%
+  group_by(state, sim) %>%
+  mutate(der = exp(rate[81]) - exp(rate[80])) %>%
+  ungroup() %>%
+  group_by(state) %>%
+  mutate(fd = median(der)) %>%
+  mutate(sign = fd < 0) %>%
+  mutate(fd2 = abs(fd)) %>%
+  group_by(sign) %>%
+  arrange(desc(fd2), state, sim, date, .by_group = TRUE) %>%
+  mutate(state = factor(state, levels = unique(state)))
 
 p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   geom_line(alpha = 0.1, aes(color = trend), size = .05) +
@@ -208,4 +234,4 @@ jsondata <- lapply(as.character(unique(sims$state)), function(x) {
   return(ll)
 })
 
-write(toJSON(jsondata), "output/states_trends.json")
+write(toJSON(jsondata), "web/states_trends.json")

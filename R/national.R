@@ -1,6 +1,19 @@
 
 
-df <- read_csv("https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz") %>%
+df <- read_csv("https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz",
+               col_types = cols(
+                 state_code = col_double(),
+                 state = col_character(),
+                 bien_juridico = col_character(),
+                 tipo = col_character(),
+                 subtipo = col_character(),
+                 modalidad = col_character(),
+                 date = col_character(),
+                 sex = col_character(),
+                 age_group = col_character(),
+                 population = col_double(),
+                 count = col_double()
+               )) %>%
   filter(subtipo == "HOMICIDIO DOLOSO" | subtipo == "FEMINICIDIO") %>%
   #filter(date >= "2016-01") %>%
   group_by(date) %>%
@@ -79,7 +92,7 @@ m1 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(lo
                  control = list(max_treedepth = 15),
                  adapt_delta = .999, 
                  family = poisson, 
-                 cores = 4,
+                 cores = parallel::detectCores(),
                  seed = 12345)
                  #prior = normal(location = 0, scale = 10))
                  #prior_smooth = normal(location = .5, scale = 1, autoscale = FALSE))
@@ -186,7 +199,7 @@ ggsave("graphs/time_trend.png", height = 7, width = 13, dpi = 100)
 print("add_predicted_draws")
 df$duration <- duration
 add_predicted_draws(na.omit(df[, c("date", "n", "time", "month",
-                                   "duration")]), m1, n = 10^3) %>%
+                                   "duration")]), m1, ndraws = 10^3) %>%
   ggplot(aes(x = date, y = n)) +
   stat_lineribbon(aes(y =  .prediction)) +
   geom_point(color = "#ef3b2c", size = 1) +

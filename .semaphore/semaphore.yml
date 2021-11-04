@@ -28,7 +28,10 @@ blocks:
             - docker images
             - ls
             - pwd
-            - docker run --entrypoint /bin/sh -e CI="true" -v "/home/semaphore/elcrimen-trends":/elcrimen diegovalle/docker-rstanarm -c "cd /elcrimen && Rscript main.R"
+            - docker run --entrypoint /bin/sh -e CI="true" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen diegovalle/docker-rstanarm -c "cd /elcrimen && Rscript main.R"
+            - nvm use
+            - npm install -g firebase-tools
+            - cd web && firebase deploy --non-interactive --token $FIREBASE_TOKEN
       epilogue:
         commands:
           - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip output/* graphs/* && ./upload_to_b2.sh elcrimen.zip; fi

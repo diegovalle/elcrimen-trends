@@ -17,10 +17,6 @@ if (length(names(.success)[!.success])) {
 
 options(stringsAsFactors = FALSE)
 
-# Check if dplyr was updated
-if (packageVersion("dplyr") < "0.8.0")
-  quit(status = 1)
-
 # install roboto condesced
 if (Sys.getenv("CI") == "true") {
   hrbrthemes::import_roboto_condensed() 
@@ -29,6 +25,8 @@ if (Sys.getenv("CI") == "true") {
   hrbrthemes::import_plex_sans()
   hrbrthemes::import_titillium_web()
 }
+
+#print(paste("number of cores:", future::availableCores()))
 
 source("R/national.R")
 source("R/states.R")
