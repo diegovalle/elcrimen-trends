@@ -6,3 +6,6 @@ cache/*
 *.png
 *.RData
 secrets-elcrimen.yml
+run-ci.sh
+output/states_trends.json
+
