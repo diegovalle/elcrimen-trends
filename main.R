@@ -26,7 +26,7 @@ if (Sys.getenv("CI") == "true") {
   hrbrthemes::import_titillium_web()
 }
 
-#print(paste("number of cores:", future::availableCores()))
+print(paste("number of cores:", parallel::detectCores()))
 
 source("R/national.R")
 source("R/states.R")
