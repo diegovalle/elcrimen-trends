@@ -1,6 +1,11 @@
 
+if(Sys.getenv("CI") == "true") {
+  url <- Sys.getenv("VICTIMAS_URL")
+} else {
+  url <- "https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz"
+}
 
-df <- read_csv("https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz",
+df <- read_csv(url,
                col_types = cols(
                  state_code = col_double(),
                  state = col_character(),

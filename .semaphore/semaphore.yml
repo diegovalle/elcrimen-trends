@@ -5,7 +5,7 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 execution_time_limit:
-  hours: 9
+  hours: 10
 blocks:
   - name: "Inspect Linux environment"
     task:
@@ -28,7 +28,7 @@ blocks:
             - docker images
             - ls
             - pwd
-            - docker run --entrypoint /bin/sh -e CI="true" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen diegovalle/docker-rstanarm -c "cd /elcrimen && Rscript main.R"
+            - docker run --entrypoint /bin/sh -e CI="true" -e VICTIMAS_URL="$VICTIMAS_URL" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen diegovalle/docker-rstanarm -c "cd /elcrimen && Rscript main.R"
             - nvm install 16.13.0
             - nvm use 16.13.0
             - npm install -g firebase-tools
