@@ -58,10 +58,11 @@ df <- df %>%
   mutate(duration = dim * (population / population[1])) %>%
   ungroup()
 
+# Subset so that we only use data after 2017 for the model
+df <- filter(df, date >= "2017-01-01")
 
 duration <- df$duration 
 df$duration <- NULL
-
 
 iterations_states <- 1500
 
