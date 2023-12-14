@@ -3,7 +3,7 @@ name: elcrimen-trends
 agent:
   machine:
     type: e1-standard-2
-    os_image: ubuntu2204
+    os_image: ubuntu2004
 execution_time_limit:
   hours: 10
 blocks:
