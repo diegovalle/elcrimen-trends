@@ -23,6 +23,9 @@ RUN mkdir -p $HOME/.R/ \
 && echo "rstan::rstan_options(auto_write = TRUE)\n" >> /home/rstudio/.Rprofile \
 && echo "options(mc.cores = parallel::detectCores())\n" >> /home/rstudio/.Rprofile
 
+
+## gdtools hrbrthemes readr dplyr zoo ggplot2 mgcv lubridate stringr loo rstanarm tidybayes jsonlite scales season directlabels  hrbrthemes tidyr betareg bayesplot
+
 # Install rstan
 RUN install2.r --error --deps TRUE \
 rstan \
