@@ -72,7 +72,7 @@ ggsave("graphs/diff.png", height = 6, width = 12, dpi = 100)
 
 p <- ggplot(df, aes(month, rate, group = year, color = year)) +
   geom_line() +
-  scale_color_gradient(low = "#fee5d9", high = "#cb181d") +
+  scale_color_gradient(low = "#fff7ec", high = "#cb181d") +
   scale_x_continuous(breaks = seq(1, 12, 3), labels = month.abb[seq(1, 12, 3)]) +
   expand_limits(y = 0) +
   theme_ft_rc() +
@@ -99,10 +99,13 @@ m1 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(lo
                  family = poisson, 
                  cores = parallel::detectCores(),
                  seed = 12345)
-                 #prior = normal(location = 0, scale = 10))
-                 #prior_smooth = normal(location = .5, scale = 1, autoscale = FALSE))
+                 #prior = normal(0,1),
+                 #prior_intercept = normal(location = 8, scale = .5),
+                 #prior_smooth = exponential(1))
 save(m1, file = "output/m1_national.RData")
-#load("output/m1_national.RData")
+prior_summary(m1)
+#modelsummary::modelsummary(m1, statistic = "conf.int")
+#load("cache/m1_national.RData")
 #pairs(m1, pars = c("s(time).1", "(Intercept)"))
 # m2 <- stan_gamm4(log(rate) ~ s(time) + rate.lag12 + s(month,  bs = 'cc', k = 12), data = df[13:55,], 
 #                  adapt_delta = .999)

@@ -59,7 +59,9 @@ df <- df %>%
   ungroup()
 
 # Subset so that we only use data after 2017 for the model
-df <- filter(df, date >= "2017-01-01")
+max_year <- year(max(df$date))
+start_year <- max_year - 4
+df <- filter(df, date >= paste0(start_year, "-01-01"))
 
 duration <- df$duration 
 df$duration <- NULL
@@ -73,11 +75,15 @@ m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
                  data = df, 
                  chains = 2, 
                  iter = iterations_states,
-                 adapt_delta = .99, 
+                 #adapt_delta = .99, 
                  cores = parallel::detectCores(), 
                  seed = 12345)
+                 #prior = normal(0,1),
+                 #prior_intercept = normal(location = 4, scale = .5),
+                 #prior_smooth = exponential(1))
 save(m1, file = "output/m1_states.RData")
-#load("output/m1_states.RData")
+#modelsummary::modelsummary(m1, statistic = "conf.int")
+#load("cache/m1_states.RData")
 
 # bayesplot::mcmc_trace(as.array(m1), pars = c( "sigma"),
 #            facet_args = list(ncol = 1, strip.position = "left"))
@@ -235,7 +241,9 @@ jsondata <- lapply(as.character(unique(sims$state)), function(x) {
   ll <- rbind(ll, df[which(df$state == state_name),]$rate)
   ll <- round(ll, 1)
   rownames(ll) <- c("l", "m", "u", "r")
-  ll <- lst(!!state_name := ll, trend = trends[which(trends$state == state_name), ]$trend)
+  ll <- lst(!!state_name := ll,
+            trend = trends[which(trends$state == state_name), ]$trend,
+            start_year = start_year)
   return(ll)
 })
 
