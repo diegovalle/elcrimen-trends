@@ -59,8 +59,10 @@ df <- df %>%
   ungroup()
 
 # Subset so that we only use data after 2017 for the model
+# This is IMPORTANT to make sure the CI job doesn't take
+# too long
 max_year <- year(max(df$date))
-start_year <- max_year - 4
+start_year <- max_year - 5
 df <- filter(df, date >= paste0(start_year, "-01-01"))
 
 duration <- df$duration 
