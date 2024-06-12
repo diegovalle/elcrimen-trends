@@ -68,7 +68,9 @@ df <- filter(df, date >= paste0(start_year, "-01-01"))
 duration <- df$duration 
 df$duration <- NULL
 
-iterations_states <- 3500
+iterations_states <- 3000
+
+print(paste0("running stan_gam with ", iterations_states, " iterations"))
 
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
                    offset(log(duration)), #,
