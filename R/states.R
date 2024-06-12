@@ -68,7 +68,7 @@ df <- filter(df, date >= paste0(start_year, "-01-01"))
 duration <- df$duration 
 df$duration <- NULL
 
-iterations_states <- 3000
+iterations_states <- 3500
 
 print(paste0("running stan_gam with ", iterations_states, " iterations"))
 
