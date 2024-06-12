@@ -62,13 +62,13 @@ df <- df %>%
 # This is IMPORTANT to make sure the CI job doesn't take
 # too long
 max_year <- year(max(df$date))
-start_year <- max_year - 5
+start_year <- max_year - 4
 df <- filter(df, date >= paste0(start_year, "-01-01"))
 
 duration <- df$duration 
 df$duration <- NULL
 
-iterations_states <- 1500
+iterations_states <- 3500
 
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
                    offset(log(duration)), #,
