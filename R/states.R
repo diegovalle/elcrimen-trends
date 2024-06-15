@@ -62,13 +62,13 @@ df <- df %>%
 # This is IMPORTANT to make sure the CI job doesn't take
 # too long
 max_year <- year(max(df$date))
-start_year <- max_year - 5
+start_year <- max_year - state_years
 df <- filter(df, date >= paste0(start_year, "-01-01"))
 
 duration <- df$duration 
 df$duration <- NULL
 
-iterations_states <- 3500
+iterations_states <- 4000
 
 print(paste0("running stan_gam with ", iterations_states, " iterations"))
 
@@ -149,6 +149,7 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
 })
 )
 
+
 sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   state_name <- x
   print(x)
@@ -165,6 +166,10 @@ sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   sims[,] <- apply(sims[,], 2, 
                         function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
   sims$sim <- 1:nrow(sims)
+  # Use only 1k (number_of_samples) simulations
+  if (nrow(sims) > number_of_samples)
+    sims <- sims[sample(1:nrow(sims), number_of_samples),]
+  
   sims <- gather(data.frame(sims), "time", "rate", -sim) %>%
     mutate(time = as.numeric(str_replace(time, "X", ""))) %>%
     arrange(sim, time)
@@ -206,7 +211,7 @@ p <- ggplot(sims, aes(x = date, y = exp(rate) * 12, group = sim)) +
   expand_limits(y = 0) +
   xlab("fecha") +
   ylab("tasa anualizada") +
-  labs(title = str_c("Tasas de homicidio y ", iterations_states, " simulaciones del ", 
+  labs(title = str_c("Tasas de homicidio y ", number_of_samples, " simulaciones del ", 
                      "posterior de un modelo aditivo multinivel ajustado por ",
                      "estacionalidad,\npor estado"),
        subtitle = str_c("Los estados están ordenados por el valor de la ",

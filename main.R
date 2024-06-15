@@ -26,9 +26,14 @@ if (Sys.getenv("CI") == "true") {
   hrbrthemes::import_titillium_web()
 }
 
+number_of_samples <- 1000
+state_years <- 6
+
 print("######################################################")
 print("######################################################")
 print(paste("number of cores:", parallel::detectCores()))
+print(paste("Number of years for state data:", state_years))
+print(paste("N for state simulations samples:", number_of_samples))
 print("######################################################")
 print("######################################################")
 
