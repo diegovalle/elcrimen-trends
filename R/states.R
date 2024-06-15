@@ -68,9 +68,13 @@ df <- filter(df, date >= paste0(start_year, "-01-01"))
 duration <- df$duration 
 df$duration <- NULL
 
-iterations_states <- 4000
 
-print(paste0("running stan_gam with ", iterations_states, " iterations"))
+print("######################################################")
+print("######################################################")
+print(paste0("running states stan_gamm4 with ", iterations_states, " iterations"))
+print("######################################################")
+print("######################################################")
+
 
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
                    offset(log(duration)), #,
@@ -92,20 +96,20 @@ save(m1, file = "output/m1_states.RData")
 # bayesplot::mcmc_trace(as.array(m1), pars = c( "sigma"),
 #            facet_args = list(ncol = 1, strip.position = "left"))
 
-plot_nonlinear(m1, "s(time):stateVERACRUZ")
-plot_nonlinear(m1)
-pp_check(m1)
-pp_check(m1, plotfun = "ppc_ecdf_overlay")
+# plot_nonlinear(m1, "s(time):stateVERACRUZ")
+# plot_nonlinear(m1)
+# pp_check(m1)
+# pp_check(m1, plotfun = "ppc_ecdf_overlay")
 
 df$duration <- duration
-p <- add_fitted_draws(na.omit(df), m1) %>%
-  ggplot(aes(x = date, y = n)) +
-  stat_lineribbon(aes(y = .value), alpha = 1) +
-  geom_point(color = "#fc9272", alpha = .5, size = .6) +
-  scale_fill_brewer(palette = "Greys") +
-  scale_color_brewer(palette = "Set2") +
-  facet_wrap(~state, scale = "free_y", ncol = 4)
-ggsave("graphs/predicted_states.png", plot = p, height = 20, width = 14, dpi = 100)
+# p <- add_fitted_draws(na.omit(df), m1) %>%
+#   ggplot(aes(x = date, y = n)) +
+#   stat_lineribbon(aes(y = .value), alpha = 1) +
+#   geom_point(color = "#fc9272", alpha = .5, size = .6) +
+#   scale_fill_brewer(palette = "Greys") +
+#   scale_color_brewer(palette = "Set2") +
+#   facet_wrap(~state, scale = "free_y", ncol = 4)
+# ggsave("graphs/predicted_states.png", plot = p, height = 20, width = 14, dpi = 100)
 
 
 dates <- seq(as.Date(min(df$date)), as.Date(max(df$date)), by = "month")

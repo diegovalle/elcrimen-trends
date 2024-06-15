@@ -84,8 +84,6 @@ p <- ggplot(df, aes(month, rate, group = year, color = year)) +
 direct.label(p, "top.bumptwice")
 ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 
-iter_national <- 4000
-
 # m <- brm(rate ~ s(time) + s(month,  bs = 'cc', k = 12), data = df,
 #          autocor = cor_arma(~ time, 0, 1, 1))
 
