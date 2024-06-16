@@ -29,13 +29,15 @@ if (Sys.getenv("CI") == "true") {
 number_of_samples <- 1000
 state_years <- 6
 iter_national <- 4000
-iterations_states <- 4000
+iterations_states <- 3500
+state_chains <- 2
 
 print("######################################################")
 print("######################################################")
 print(paste("number of cores:", parallel::detectCores()))
 print(paste("Number of years for state data:", state_years))
 print(paste("Iterations for national data:", iter_national))
+print(paste("Number of state chains:", state_chains))
 print(paste("Iterations for state data:", iterations_states))
 print(paste("N for state simulations samples:", number_of_samples))
 print("######################################################")

@@ -81,7 +81,7 @@ m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
                  family = poisson,
                  random = ~(1 | state), 
                  data = df, 
-                 chains = 4, 
+                 chains = state_chains, 
                  iter = iterations_states,
                  #adapt_delta = .99, 
                  cores = parallel::detectCores(), 
@@ -171,8 +171,8 @@ sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
                         function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
   sims$sim <- 1:nrow(sims)
   # Use only 1k (number_of_samples) simulations
-  if (nrow(sims) > number_of_samples)
-    sims <- sims[sample(1:nrow(sims), number_of_samples),]
+  # if (nrow(sims) > number_of_samples)
+  #   sims <- sims[sample(1:nrow(sims), number_of_samples),]
   
   sims <- gather(data.frame(sims), "time", "rate", -sim) %>%
     mutate(time = as.numeric(str_replace(time, "X", ""))) %>%

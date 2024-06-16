@@ -8,4 +8,4 @@ cache/*
 secrets-elcrimen.yml
 run-ci.sh
 output/states_trends.json
-
+web/states_trends.json
