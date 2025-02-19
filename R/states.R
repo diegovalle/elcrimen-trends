@@ -5,7 +5,7 @@ if (Sys.getenv("CI") == "true") {
 }
 
 temp_file_path <- tempfile(fileext = ".gz")
-download.file(url, destfile = temp_file_path, mode = "wb")
+download.file(url, destfile = temp_file_path, mode = "wb", quiet = TRUE)
 
 df <- read_csv(temp_file_path,
                col_types = cols(
