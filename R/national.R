@@ -1,4 +1,8 @@
-url <- "https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz?cache"
+if (Sys.getenv("CI") == "true") {
+  url <- Sys.getenv("VICTIMAS_URL")
+} else {
+  url <- "https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz?cache"
+}
 
 temp_file_path <- tempfile(fileext = ".gz")
 download.file(url, destfile = temp_file_path, mode = "wb")
