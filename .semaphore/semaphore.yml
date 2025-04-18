@@ -35,5 +35,5 @@ blocks:
             - cd web && firebase deploy --non-interactive --token "$FIREBASE_TOKEN" && cd ..
       epilogue:
         commands:
-          - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip output/* graphs/* webs/* && ./upload_to_b2.sh elcrimen.zip; fi
-          - if [ "$SEMAPHORE_JOB_RESULT" = "failed" ]; then zip elcrimen.zip output/* graphs/* webs/* && ./upload_to_b2.sh elcrimen.zip; fi
+          - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip output/* graphs/* web/* && ./upload_to_b2.sh elcrimen.zip; fi
+          - if [ "$SEMAPHORE_JOB_RESULT" = "failed" ]; then zip elcrimen.zip output/* graphs/* web/* && ./upload_to_b2.sh elcrimen.zip; fi
