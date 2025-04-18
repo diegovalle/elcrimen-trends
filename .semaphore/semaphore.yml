@@ -32,7 +32,7 @@ blocks:
             - ls
             - pwd
             - docker run --entrypoint /bin/sh -e CI="true" -e VICTIMAS_URL="$VICTIMAS_URL" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen diegovalle/docker-rstanarm -c "cd /elcrimen && Rscript main.R"
-            - cd web && firebase deploy --non-interactive --token $FIREBASE_TOKEN && cd ..
+            - cd web && firebase deploy --non-interactive --token "$FIREBASE_TOKEN" && cd ..
       epilogue:
         commands:
           - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip output/* graphs/* webs/* && ./upload_to_b2.sh elcrimen.zip; fi
