@@ -1,8 +1,5 @@
-if (Sys.getenv("CI") == "true") {
-  url <- Sys.getenv("VICTIMAS_URL")
-} else {
-  url <- "https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz?cache"
-}
+url <- Sys.getenv("VICTIMAS_URL")
+
 
 temp_file_path <- tempfile(fileext = ".gz")
 download.file(url, destfile = temp_file_path, mode = "wb", quiet = TRUE)
@@ -45,8 +42,8 @@ pop <- read_csv("data/states_pop.csv", col_types = cols(
   year = col_double(),
   month = col_double(),
   population = col_double()
-))  %>% 
-  filter(year %in% 2015:max(df$year)) %>% 
+))  %>%
+  filter(year %in% 2015:max(df$year)) %>%
   mutate(date = as.Date(str_c(year, "-", month, "-01")))
 df <- left_join(df, pop, by = c("date", "state_code", "year", "month"))
 df$rate <- ((df$n / days_in_month(df$date)) * 30) / df$population * 10^5 * 12
@@ -68,7 +65,7 @@ max_year <- year(max(df$date))
 start_year <- max_year - state_years
 df <- filter(df, date >= paste0(start_year, "-01-01"))
 
-duration <- df$duration 
+duration <- df$duration
 df$duration <- NULL
 
 
@@ -82,12 +79,12 @@ print("######################################################")
 m1 <- stan_gamm4(n ~ s(time, by = state)+ s(month, bs = "cc", k = 12) +
                    offset(log(duration)), #,
                  family = poisson,
-                 random = ~(1 | state), 
-                 data = df, 
-                 chains = state_chains, 
+                 random = ~(1 | state),
+                 data = df,
+                 chains = state_chains,
                  iter = iterations_states,
-                 #adapt_delta = .99, 
-                 cores = parallel::detectCores(), 
+                 #adapt_delta = .99,
+                 cores = parallel::detectCores(),
                  seed = 12345)
                  #prior = normal(0,1),
                  #prior_intercept = normal(location = 4, scale = .5),
@@ -122,19 +119,19 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   state_name <- x
   inc <- grep(state_name, colnames(predict(m1$jam, type = "lpmatrix")))
   #X0 <- predict(m1$jam, type = 'lpmatrix')[, c(1, inc)]
-  
-  
+
+
   eps <- 30
-  newDFeps <- df 
+  newDFeps <- df
   newDFeps$time <- df$time + eps
   newDFeps$duration <- log(1)
   X1 <- predict(m1$jam, newDFeps, type = 'lpmatrix')
-  
-  sims_o <- as.matrix(m1)[, c(1, inc)] %*% t(as.matrix(m1$x[which(df$state == state_name), c(1, inc)])) 
+
+  sims_o <- as.matrix(m1)[, c(1, inc)] %*% t(as.matrix(m1$x[which(df$state == state_name), c(1, inc)]))
   sims_n <- as.matrix(m1)[, c(1, inc)] %*% t(X1[which(df$state == state_name), c(1, inc)])
-  
+
   #100 x 10 * ndates * 10
-  d1 <- ((sims_n - sims_o) / eps) 
+  d1 <- ((sims_n - sims_o) / eps)
   (sims_n - sims_o)[1:5, 1:5]
   dim(d1)
   d1[1:5, 1:5]
@@ -142,16 +139,16 @@ trends <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   qt <- quantile(d1[, ndates], c(.05, .95))
   med <- median(d1[, ndates])
   if (qt[1] < 0 & qt[2] < 0)
-    return(data.frame(state = state_name, 
-                      trend = "negative", 
+    return(data.frame(state = state_name,
+                      trend = "negative",
                       fd = med))
   else if (qt[1] > 0 & qt[2] > 0)
-    return(data.frame(state = state_name, 
-                      trend = "positive", 
+    return(data.frame(state = state_name,
+                      trend = "positive",
                       fd = med))
   else
-    return(data.frame(state = state_name, 
-                      trend = NA, 
+    return(data.frame(state = state_name,
+                      trend = NA,
                       fd = med))
 })
 )
@@ -161,22 +158,22 @@ sims <- do.call(rbind, lapply(as.character(unique(df$state)), function(x) {
   state_name <- x
   print(x)
   inc <- grep(state_name, colnames(predict(m1$jam, type = "lpmatrix")))
-  binc <- grep(paste0("b\\[\\(Intercept\\) state:", 
+  binc <- grep(paste0("b\\[\\(Intercept\\) state:",
                       str_replace_all(state_name," ", "_"),
-                      "\\]$"), 
+                      "\\]$"),
                colnames(m1$x))
   X0 <- as.matrix(m1$x)[which(df$state == state_name), c(1, inc)]
   sims <- as.matrix(m1)[, c(1, inc)] %*% t(X0)
   b = as.matrix(m1)[, binc, drop = FALSE]
   sims <- apply(sims, 2, function(x) {x + b}) %>% as.data.frame()
   # substract offset
-  sims[,] <- apply(sims[,], 2, 
+  sims[,] <- apply(sims[,], 2,
                         function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
   sims$sim <- 1:nrow(sims)
   # Use only 1k (number_of_samples) simulations
   # if (nrow(sims) > number_of_samples)
   #   sims <- sims[sample(1:nrow(sims), number_of_samples),]
-  
+
   sims <- gather(data.frame(sims), "time", "rate", -sim) %>%
     mutate(time = as.numeric(str_replace(time, "X", ""))) %>%
     arrange(sim, time)
@@ -205,18 +202,18 @@ jsondata <- lapply(as.character(unique(sims$state)), function(x) {
   state_name <- x
   print(x)
   inc <- grep(state_name, colnames(predict(m1$jam, type = "lpmatrix")))
-  binc <- grep(paste0("b\\[\\(Intercept\\) state:", 
+  binc <- grep(paste0("b\\[\\(Intercept\\) state:",
                       str_replace_all(state_name," ", "_"),
-                      "\\]$"), 
+                      "\\]$"),
                colnames(m1$x))
   X0 <- as.matrix(m1$x)[which(df$state == state_name), c(1, inc)]
   sims <- as.matrix(m1)[, c(1, inc)] %*% t(X0)
   b = as.matrix(m1)[, binc, drop = FALSE]
   sims <- apply(sims, 2, function(x) {x + b}) %>% as.data.frame()
   # substract offset
-  sims[,] <- apply(sims[,], 2, 
+  sims[,] <- apply(sims[,], 2,
                    function(x) x - log(df[which(df$state == state_name), ]$population[1]/10^5))
-  
+
   ll <- apply(sims[,], 2, function(x) quantile(exp(x)*12, c(.05, .5, .95)))
   ll <- rbind(ll, df[which(df$state == state_name),]$rate)
   ll <- round(ll, 1)

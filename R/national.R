@@ -1,8 +1,4 @@
-if (Sys.getenv("CI") == "true") {
-  url <- Sys.getenv("VICTIMAS_URL")
-} else {
-  url <- "https://data.diegovalle.net/elcrimen/nm-estatal-victimas.csv.gz?cache"
-}
+url <- Sys.getenv("VICTIMAS_URL")
 
 temp_file_path <- tempfile(fileext = ".gz")
 download.file(url, destfile = temp_file_path, mode = "wb", quiet = TRUE)
@@ -29,7 +25,7 @@ df <- read_csv(temp_file_path,
   mutate(time = as.numeric(date)) %>%
   mutate(month = month(date)) %>%
   mutate(year = year(date)) %>%
-  mutate(dim = days_in_month(date)) 
+  mutate(dim = days_in_month(date))
 print(max(df$date))
 
 # add missing oaxaca oct 2016 number
@@ -45,7 +41,7 @@ pop <- read_csv("data/national_pop.csv", col_types = cols(
   year = col_double(),
   month = col_double(),
   population = col_double()
-)) %>% 
+)) %>%
   filter(year %in% 2015:max(df$year))
 df$pop <- pop$population[1:nrow(df)]
 df$rate <- ((df$n / df$dim) * 30) / df$pop * 10^5 * 12
@@ -90,13 +86,13 @@ ggsave("graphs/year.png", height = 6, width = 10, dpi = 100)
 #          autocor = cor_arma(~ time, 0, 1, 1))
 
 ## Estacionaliad simple
-m1 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(log(duration)), 
+m1 <- stan_gamm4(n ~ s(time, bs="gp") + s(month,  bs = 'cp', k = 12) + offset(log(duration)),
                  data = df,
-                 iter = iter_national, 
+                 iter = iter_national,
                  chains = 4,
                  control = list(max_treedepth = 15),
-                 adapt_delta = .999, 
-                 family = poisson, 
+                 adapt_delta = .999,
+                 family = poisson,
                  cores = parallel::detectCores(),
                  seed = 12345)
                  #prior = normal(0,1),
@@ -107,11 +103,11 @@ prior_summary(m1)
 #modelsummary::modelsummary(m1, statistic = "conf.int")
 #load("cache/m1_national.RData")
 #pairs(m1, pars = c("s(time).1", "(Intercept)"))
-# m2 <- stan_gamm4(log(rate) ~ s(time) + rate.lag12 + s(month,  bs = 'cc', k = 12), data = df[13:55,], 
+# m2 <- stan_gamm4(log(rate) ~ s(time) + rate.lag12 + s(month,  bs = 'cc', k = 12), data = df[13:55,],
 #                  adapt_delta = .999)
 #m2 <- stan_gamm4(rate ~ s(time) + s(month, k = 12), data = df, adapt_delta = .999)
 #m3 <- stan_gamm4(rate ~ s(time), data = df, adapt_delta = .999)
-#m_gp <- stan_gamm4(rate ~ s(time, bs = "gp") , data = df, 
+#m_gp <- stan_gamm4(rate ~ s(time, bs = "gp") , data = df,
 #                   adapt_delta = .999)
 # Which model is best?
 #loo1 <- loo(m1, k_threshold = 0.7)
@@ -133,13 +129,13 @@ first_deriv_national <- function(m1, df) {
   df2$duration <- log(1)
   inc <- grep("s\\(time\\).*", colnames(predict(m1$jam, df2, type = "lpmatrix")))
   X0 <- predict(m1$jam, df2, type = "lpmatrix")[, c(1,inc)]
-  
+
   eps <- .1
-  newDFeps <- df 
+  newDFeps <- df
   newDFeps$time <- df$time + eps
   newDFeps$duration <- log(1)
   X1 <- predict(m1$jam, newDFeps, type = 'lpmatrix')[, c(1,inc)]
-  
+
   sims_o <- as.matrix(m1)[, 1:(length(inc) + 1)] %*% t(X0)
   sims_o <- sims_o - log(df$pop[1]/100000)
   sims_o <- exp(sims_o) * 12
@@ -147,8 +143,8 @@ first_deriv_national <- function(m1, df) {
   sims_n <- as.matrix(m1)[, 1:(length(inc) + 1)] %*% t(X1)
   sims_n <- sims_n - log(df$pop[1]/100000)
   sims_n <- exp(sims_n) * 12
-  
-  d1 <- ((sims_n - sims_o) / eps) 
+
+  d1 <- ((sims_n - sims_o) / eps)
   apply(d1, 2,  function(x) quantile(x, c(.05, .95)))
 }
 fd_last <- first_deriv_national(m1, df)[, nrow(df)]
@@ -177,8 +173,8 @@ sims$date <- seq(as.Date("2015-01-01"), as.Date(max(df$date)), by = "month")
 df$sim <- NA
 ggplot(sims, aes(x = date, y = exp(rate)*12, group = sim)) +
   geom_line(alpha = 0.01, color = col) +
-  geom_point(data = df, aes(date, rate), 
-             fill = "#f8766d", 
+  geom_point(data = df, aes(date, rate),
+             fill = "#f8766d",
              color = "black",
              shape = 21,
              size = 2) +
@@ -186,7 +182,7 @@ ggplot(sims, aes(x = date, y = exp(rate)*12, group = sim)) +
   expand_limits(y = 0) +
   xlab("fecha") +
   ylab("tasa anualizada") +
-  labs(title = str_c("Tasas de homicidio en México y ", iter_national, 
+  labs(title = str_c("Tasas de homicidio en México y ", iter_national,
                      " simulaciones del posterior\nde un modelo aditivo ",
                      "ajustado por estacionalidad"),
        subtitle = sub_fd,
@@ -218,4 +214,3 @@ add_predicted_draws(na.omit(df[, c("date", "n", "time", "month",
        caption = "Fuente: SNSP víctimas y CONAPO con datos del 2015") +
   theme_ipsum_rc()
 ggsave("graphs/predicted.png", height = 7, width = 14, dpi = 100)
-
