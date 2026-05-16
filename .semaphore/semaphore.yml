@@ -5,16 +5,8 @@ agent:
     type: e2-standard-2
     os_image: ubuntu2404
 execution_time_limit:
-  hours: 10
+  hours: 4
 blocks:
-  - name: "Inspect Linux environment"
-    task:
-      jobs:
-        - name: Show Environment
-          commands:
-            - echo $SEMAPHORE_PIPELINE_ID
-            - echo $HOME
-            - echo $SEMAPHORE_GIT_DIR
   - name: "Docker Image"
     task:
       secrets:
@@ -32,20 +24,18 @@ blocks:
         - name: Build with docker
           commands:
             - checkout
-            - nvm install v18.18.0
-            - nvm use v18.18.0
-            - npm ci -g firebase-tools@13.0.1
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker pull diegovalle/docker-rstanarm:latest
             - docker images
             - ls
             - pwd
             - docker run --entrypoint /bin/sh -e CI="true" -e VICTIMAS_URL="$VICTIMAS_URL" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen diegovalle/docker-rstanarm -c "cd /elcrimen && Rscript main.R"
-            - artifact push project output
-            - artifact push project web
-            - artifact push project graphs
-            - cd web && firebase deploy --non-interactive --token "$FIREBASE_TOKEN" && cd ..
+            - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"output
+            - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"web
+            - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"graphs
+            - docker pull node:18.18.0:latest
+            - docker run -it --entrypoint /bin/sh -e FIREBASE_TOKEN="$FIREBASE_TOKEN" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen node:18.18.0 -c 'cd /elcrimen/web && npm install firebase-tools@13.0.1 && firebase deploy --non-interactive --token "$FIREBASE_TOKEN"'
       epilogue:
         commands:
-          - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip "$SEMAPHORE_GIT_DIR/"output/* "$SEMAPHORE_GIT_DIR/"graphs/* "$SEMAPHORE_GIT_DIR/"web/* && ./upload_to_b2.sh elcrimen.zip; fi
-          - if [ "$SEMAPHORE_JOB_RESULT" = "failed" ]; then zip elcrimen.zip "$SEMAPHORE_GIT_DIR/"output/* "$SEMAPHORE_GIT_DIR/"graphs/* "$SEMAPHORE_GIT_DIR/"web/* && ./upload_to_b2.sh elcrimen.zip; fi
+          - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip "$HOME/$SEMAPHORE_GIT_DIR/"output/* "$HOME/$SEMAPHORE_GIT_DIR/"graphs/* "$HOME/$SEMAPHORE_GIT_DIR/"web/* && ./upload_to_b2.sh elcrimen.zip; fi
+          - if [ "$SEMAPHORE_JOB_RESULT" = "failed" ]; then zip elcrimen.zip "$HOME/$SEMAPHORE_GIT_DIR/"output/* "$HOME/$SEMAPHORE_GIT_DIR/"graphs/* "$HOME/$SEMAPHORE_GIT_DIR/"web/* && ./upload_to_b2.sh elcrimen.zip; fi
