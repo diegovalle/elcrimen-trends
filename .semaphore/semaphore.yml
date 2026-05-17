@@ -26,7 +26,7 @@ blocks:
             - checkout
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker pull diegovalle/docker-rstanarm:latest
-            - docker pull node:18.18.0
+            - docker pull node:24.0.0
             - docker images
             - ls
             - pwd
@@ -34,7 +34,7 @@ blocks:
             - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"output
             - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"web
             - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"graphs
-            - docker run -it --entrypoint /bin/sh -e FIREBASE_TOKEN="$FIREBASE_TOKEN" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen node:18.18.0 -c 'cd /elcrimen/web && npm install firebase-tools@13.0.1 && firebase deploy --non-interactive --token "$FIREBASE_TOKEN"'
+            - docker run --entrypoint /bin/sh -e FIREBASE_TOKEN="$FIREBASE_TOKEN" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen node:24.0.0 -c 'cd /elcrimen/web && npm install -g firebase-tools@13.0.1 && firebase deploy --non-interactive --token "$FIREBASE_TOKEN"'
       epilogue:
         commands:
           - if [ "$SEMAPHORE_JOB_RESULT" = "passed" ]; then zip elcrimen.zip "$HOME/$SEMAPHORE_GIT_DIR/"output/* "$HOME/$SEMAPHORE_GIT_DIR/"graphs/* "$HOME/$SEMAPHORE_GIT_DIR/"web/* && ./upload_to_b2.sh elcrimen.zip; fi
