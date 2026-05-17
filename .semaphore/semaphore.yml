@@ -26,6 +26,7 @@ blocks:
             - checkout
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker pull diegovalle/docker-rstanarm:latest
+            - docker pull node:18.18.0
             - docker images
             - ls
             - pwd
@@ -33,7 +34,6 @@ blocks:
             - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"output
             - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"web
             - artifact push project "$HOME/$SEMAPHORE_GIT_DIR/"graphs
-            - docker pull node:18.18.0:latest
             - docker run -it --entrypoint /bin/sh -e FIREBASE_TOKEN="$FIREBASE_TOKEN" -v "$HOME/$SEMAPHORE_GIT_DIR":/elcrimen node:18.18.0 -c 'cd /elcrimen/web && npm install firebase-tools@13.0.1 && firebase deploy --non-interactive --token "$FIREBASE_TOKEN"'
       epilogue:
         commands:
